@@ -63,11 +63,15 @@ ID_OFFSET = 2^21;
 TIME_MESSAGE_ID = 256 * ID_OFFSET;
 STATE_MESSAGE_ID = 304 * ID_OFFSET;
 TORQUE_MESSAGE_ID = 300 * ID_OFFSET;
-MOTOR_MESSAGE_ID = 296 * ID_OFFSET;
-CONTROL_LEVER_MESSAGE_ID = 641 * ID_OFFSET;
-TENSION_MESSAGE_ID = 448 * ID_OFFSET;
-CABLE_ANGLE_MESSAGE_ID = 464 * ID_OFFSET;
-LAUNCH_PARAM_MESSAGE_ID = 327 * ID_OFFSET;
+MOTOR_MESSAGE_ID = 296 * ID_OFFSET;         % inconsistnet with Excel
+CONTROL_LEVER_MESSAGE_RMT_ID = 328 * ID_OFFSET; 
+CONTROL_LEVER_MESSAGE_LCL_ID = 329 * ID_OFFSET;
+CP_INPUTS_RMT_ID = 294 * ID_OFFSET; 
+CP_INPUT_LCL_ID = 296 * ID_OFFSET;
+CP_OUTPUT_ID = 336 * ID_OFFSET;
+TENSION_MESSAGE_ID = 448 * ID_OFFSET;       
+CABLE_ANGLE_MESSAGE_ID = 464 * ID_OFFSET;   
+LAUNCH_PARAM_MESSAGE_ID = 327 * ID_OFFSET;  % inconsistnet with Excel
 PARAM_REQUEST_MESSAGE_ID = 312 * ID_OFFSET;
 
 CABLE_ANGLE_MESSAGE_RATE = 8;
@@ -117,8 +121,11 @@ msg = '';   %   Is this needed?
 
 tic; display('Setting up sockets'); % 1000*toc, tic;
 
-if 1
-    socket = java.net.Socket('192.168.1.113', 32123);    % hub-server on Ubuntu
+if 0
+%      socket = java.net.Socket('192.168.1.', 32123);    % hub-server on
+%     George home
+%     socket = java.net.Socket('147.222.165.75', 32123);    % hub-server on Jacob
+socket = java.net.Socket('192.168.1.7', 32123);
 else
     socket = java.net.Socket('127.0.0.1', 32123); % client to local server
 end
@@ -231,7 +238,7 @@ while(true)
                                 
             case STATE_MESSAGE_ID
                 receivedState = canIn.get_byte(0)
-                display([receivedState]);
+%                 display([receivedState]);
                 if (receivedState == 1)
                     %   dump unused data rows
                     data = data(1:i, :);
@@ -268,7 +275,7 @@ while(true)
                     launchInProgressFlag = 0;
                 end
                 
-            case CONTROL_LEVER_MESSAGE_ID
+            case CONTROL_LEVER_MESSAGE_LCL_ID
                 
                 
             otherwise 
