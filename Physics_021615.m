@@ -14,7 +14,7 @@ global Vs V1 LoD Kd deltp lambda delta MgoMp
 import java.net.*
 import java.io.*
 import java.lang.*
-import MasterController.mastercontroller.*
+import GlassControlPanel.glasscontrolpanel.*
 
 TICSPERSECOND = 16;
 Tdsp = 50;
@@ -92,7 +92,7 @@ tensionOffset = 1024;
 torqueScale = 1/32;
 torqueToTension = 20;
 
-tensionMessage = mastercontroller.CanCnvt();
+tensionMessage = glasscontrolpanel.CanCnvt();
 tensionMessage.id = TENSION_MESSAGE_ID;
 
 
@@ -100,19 +100,19 @@ motorToDrum = 7;
 drumRadius = 0.4;
 motorSpeedScale = 1/128;
 
-motorMessage = mastercontroller.CanCnvt();
+motorMessage = glasscontrolpanel.CanCnvt();
 motorMessage.id = MOTOR_MESSAGE_ID;
 
 cableAngleScale = 0.5;
 cableAngleOffset = 40;  %   offset in lsbs
 
-cableAngleMessage = mastercontroller.CanCnvt();
+cableAngleMessage = glasscontrolpanel.CanCnvt();
 cableAngleMessage.id = CABLE_ANGLE_MESSAGE_ID;
 
-paramMessage = mastercontroller.CanCnvt();
+paramMessage = glasscontrolpanel.CanCnvt();
 paramMessage.id = LAUNCH_PARAM_MESSAGE_ID;
 
-canIn = mastercontroller.CanCnvt();
+canIn = glasscontrolpanel.CanCnvt();
 msg = '';   %   Is this needed?
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -159,7 +159,8 @@ while(true)
         
     %   initialize data for all CANbus sensor messages
     
-    tensionMessage.set_short(tensionOffset, 0); %   tension
+    %tensionMessage.set_short(tensionOffset, 0); %   tension
+    tensionMessage.set_halffloat(0.0, 0); %   tension
     tensionMessage.set_byte (0, 2);  %   status
     tensionMessage.set_byte (fracTime, 3);  %   fracTime degug
     tensionMessage.dlc = 3 + 1;             %   is this needed
