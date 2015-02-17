@@ -87,8 +87,8 @@ num_tim_intrv = Tmax/tinc + 1;  %   Maximum number of time steps
 
 %   prepare messages for before the launch begins
 
-tensionScale = 0.25;
-tensionOffset = 1024;
+%tensionScale = 0.25;
+%tensionOffset = 1024;
 torqueScale = 1/32;
 torqueToTension = 20;
 
@@ -98,13 +98,13 @@ tensionMessage.id = TENSION_MESSAGE_ID;
 
 motorToDrum = 7;
 drumRadius = 0.4;
-motorSpeedScale = 1/128;
+%motorSpeedScale = 1/128;
 
 motorMessage = glasscontrolpanel.CanCnvt();
 motorMessage.id = MOTOR_MESSAGE_ID;
 
-cableAngleScale = 0.5;
-cableAngleOffset = 40;  %   offset in lsbs
+%cableAngleScale = 0.5;
+%cableAngleOffset = 40;  %   offset in lsbs
 
 cableAngleMessage = glasscontrolpanel.CanCnvt();
 cableAngleMessage.id = CABLE_ANGLE_MESSAGE_ID;
@@ -162,21 +162,23 @@ while(true)
     %tensionMessage.set_short(tensionOffset, 0); %   tension
     tensionMessage.set_halffloat(0.0, 0); %   tension
     tensionMessage.set_byte (0, 2);  %   status
-    tensionMessage.set_byte (fracTime, 3);  %   fracTime degug
-    tensionMessage.dlc = 3 + 1;             %   is this needed
+    %tensionMessage.set_byte (fracTime, 3);  %   fracTime degug
+    tensionMessage.dlc = 3 + 0;             %   is this needed
     
-    motorMessage.set_short(motorSpeed/motorSpeedScale,0);%  motor speed
-    motorMessage.set_short(0,2);    %   revolutions not implemented
-    motorMessage.set_byte(0, 4);     %   temp not implemented
-    motorMessage.set_byte(0, 5); %   status byte
-    motorMessage.set_byte(fracTime ,6); %   fracTime debug
-    motorMessage.dlc = 6 + 1;           %   is this needed?
+    %motorMessage.set_short(motorSpeed/motorSpeedScale,0);%  motor speed
+    motorMessage.set_halffloat(motorSpeed, 0);
+    motorMessage.set_halffloat(0.0, 2);    %   revolutions not implemented
+    motorMessage.set_halffloat(0.0, 4);     %   temp not implemented
+    motorMessage.set_byte(0, 6); %   status byte
+    %motorMessage.set_byte(fracTime ,6); %   fracTime debug
+    motorMessage.dlc = 7 + 0;           %   is this needed?
     
-    cableAngleMessage.set_byte(((cableAngle / cableAngleScale) ...
-        + cableAngleOffset), 0); % cable angle
-    cableAngleMessage.set_byte(0, 1); % status
-    cableAngleMessage.set_byte(fracTime, 2);    %   fracTime debug
-    cableAngleMessage.dlc = 2 + 1;              %   is this needed?
+    %cableAngleMessage.set_byte(((cableAngle / cableAngleScale) ...
+    %    + cableAngleOffset), 0); % cable angle
+    cableAngleMessage.set_halffloat(cableAngle, 0);
+    cableAngleMessage.set_byte(0, 2); % status
+    %cableAngleMessage.set_byte(fracTime, 3);    %   fracTime debug
+    cableAngleMessage.dlc = 3 + 0;              %   is this needed?
     
     %    Preallocate data variable for maximum number of rows
     data = zeros(num_tim_intrv, 8);
@@ -203,18 +205,18 @@ while(true)
                 end
                 %display('Time message');  
                 %   send send sensor messages from last simulation step
- tensionMessage.set_byte (fracTime, 3);  %   fracTime degug
-                tensionMessage.dlc = 3 + 1;             %   is this needed
+ %tensionMessage.set_byte (fracTime, 3);  %   fracTime degug
+                tensionMessage.dlc = 3 + 0;             %   is this needed
                 outstream.write(tensionMessage.msg_prep());
                 
- motorMessage.set_byte(fracTime ,6); %   fracTime debug
-                motorMessage.dlc = 6 + 1;           %   is this needed?
+ %motorMessage.set_byte(fracTime ,6); %   fracTime debug
+                motorMessage.dlc = 7 + 0;           %   is this needed?
                 outstream.write(motorMessage.msg_prep());
                 
                 if mod(fracTime + CABLE_ANGLE_MESSAGE_MOD , ...
                         TICSPERSECOND/CABLE_ANGLE_MESSAGE_RATE) == 0
- cableAngleMessage.set_byte(fracTime, 2);    %   fracTime debug
-                    cableAngleMessage.dlc = 2 + 1;              %   is this needed?
+ %cableAngleMessage.set_byte(fracTime, 2);    %   fracTime debug
+                    cableAngleMessage.dlc = 3 + 0;              %   is this needed?
                     outstream.write(cableAngleMessage.msg_prep());
                end
                outstream.flush();
@@ -228,7 +230,7 @@ while(true)
             case PARAM_REQUEST_MESSAGE_ID
                 % send parameter response message (simulating host controller)
                 % if connected to real host remove the following two lines
-                display(['Parameter Request Message Received']);
+                display('Parameter Request Message Received');
                 paramMessage.msg_prep;
                 outstream.write(paramMessage.msg_prep())
                 outstream.flush();
@@ -314,9 +316,9 @@ while(true)
             %  if (mod(round(t1 * TICSPERSECOND), 16) == 0);
                 if (floor(t1 * 4) - floor((t1 - tinc) * 4) == 1)
                 %   plot running results
-                pltrslts(data, i, Mg, Tdsp);
+                    pltrslts(data, i, Mg, Tdsp);
                 %             display('Ploting complete'); [1000*toc], tic;
-            end
+                end
             
             %   Values needed for messages to Master Controller
             x = data(i, 4);
@@ -334,23 +336,26 @@ while(true)
             if state == 8
                 motorSpeed = 0;
             end            
-            motorMessage.set_short(motorSpeed/motorSpeedScale, 0);  % speed
-            motorMessage.set_short(0, 2); % revolutions (not implemented)
-            motorMessage.set_byte(0, 4); % temperature (not used)
-            motorMessage.set_byte(0, 5); % status
-            motorMessage.dlc = 6;   %   is this needed?
+            %motorMessage.set_short(motorSpeed/motorSpeedScale, 0);  % speed
+            motorMessage.set_halffloat(motorSpeed, 0); %    motor speed
+            motorMessage.set_halffloat(0.0, 2); % revolutions (not implemented)
+            motorMessage.set_halffloat(0.0, 4); % temperature (not used)
+            motorMessage.set_byte(0, 6); % status
+            motorMessage.dlc = 7;   %   is this needed?
             
             %   Cable Angle
             theta = atan2(y, x);
             cableAngle = theta * 180/pi;    %   in degrees
-            cableAngleMessage.set_byte((cableAngle / cableAngleScale) ...
-                + cableAngleOffset, 0);
-            cableAngleMessage.set_byte(0,1); %  Status
-            cableAngleMessage.dlc = 2;  %   is this needed?
+            cableAngleMessage.set_halffloat(cableAngle, 0);
+            %cableAngleMessage.set_byte((cableAngle / cableAngleScale) ...
+            %    + cableAngleOffset, 0);
+            cableAngleMessage.set_byte(0,2); %  Status
+            cableAngleMessage.dlc = 3;  %   is this needed?
             
             %   Tension
-            tensionMessage.set_short((data(i, 3) * Mg / tensionScale) ...
-                + tensionOffset, 0);
+            tensionMessage.set_halffloat(data(i, 3) * Mg, 0);
+            %tensionMessage.set_short((data(i, 3) * Mg / tensionScale) ...
+            %    + tensionOffset, 0);
             tensionMessage.set_byte(0, 2); %    Status
             tensionMessage.dlc = 3; %   is this needed
             
@@ -358,7 +363,7 @@ while(true)
             %         display('Sensor messages formating completed'); [1000*toc], tic;
         end
     end
-     display(['End of Launch'])
+     display('End of Launch')
 end
 outstream.close();
 instream.close();
