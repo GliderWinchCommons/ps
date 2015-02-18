@@ -63,16 +63,20 @@ ID_OFFSET = 2^21;
 TIME_MESSAGE_ID = 256 * ID_OFFSET;
 STATE_MESSAGE_ID = 304 * ID_OFFSET;
 TORQUE_MESSAGE_ID = 300 * ID_OFFSET;
-MOTOR_MESSAGE_ID = 296 * ID_OFFSET;         % inconsistnet with Excel
+MOTOR_MESSAGE_ID = 292 * ID_OFFSET;  
+%MOTOR_MESSAGE_ID = 296 * ID_OFFSET;         % inconsistnet with Excel
 CONTROL_LEVER_MESSAGE_RMT_ID = 328 * ID_OFFSET; 
 CONTROL_LEVER_MESSAGE_LCL_ID = 329 * ID_OFFSET;
 CP_INPUTS_RMT_ID = 294 * ID_OFFSET; 
 CP_INPUT_LCL_ID = 296 * ID_OFFSET;
 CP_OUTPUT_ID = 336 * ID_OFFSET;
 TENSION_MESSAGE_ID = 448 * ID_OFFSET;       
-CABLE_ANGLE_MESSAGE_ID = 464 * ID_OFFSET;   
-LAUNCH_PARAM_MESSAGE_ID = 327 * ID_OFFSET;  % inconsistnet with Excel
-PARAM_REQUEST_MESSAGE_ID = 312 * ID_OFFSET;
+CABLE_ANGLE_MESSAGE_ID = 464 * ID_OFFSET;
+LAUNCH_PARAM_MESSAGE_ID = 320 * ID_OFFSET;  
+%LAUNCH_PARAM_MESSAGE_ID = 327 * ID_OFFSET;  % inconsistnet with Excel
+PARAM_REQUEST_MESSAGE_ID = 312 * ID_OFFSET; 
+
+
 
 CABLE_ANGLE_MESSAGE_RATE = 8;
 CABLE_ANGLE_MESSAGE_MOD = 2;
@@ -223,7 +227,8 @@ while(true)
                 %   display('Sensor messages sent'); [1000*toc], tic;                
                 
             case TORQUE_MESSAGE_ID
-                receivedTorque = canIn.get_short(0)* torqueScale;
+                %receivedTorque = canIn.get_short(0)* torqueScale;
+                receivedTorque = canIn.get_halffloat(0);
                 %   display('Torque message'); [1000*toc j receivedTorque], tic;
                 torqueMsgFlag = 1;                
                 
