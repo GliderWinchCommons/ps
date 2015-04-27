@@ -60,23 +60,29 @@ yinit = 0;
 %DEFINE MESSAGE IDs
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-ID_OFFSET = 2^21;
+ID_OFFSET = 21;
+ID_SCALE = 2^ID_OFFSET;
 
-TIME_MESSAGE_ID = 256 * ID_OFFSET;
-MOTOR_MESSAGE_ID = 292 * ID_OFFSET;
-TORQUE_MESSAGE_ID = 300 * ID_OFFSET;
-STATE_MESSAGE_ID = 304 * ID_OFFSET;
-PARAM_REQUEST_MESSAGE_ID = 312 * ID_OFFSET;
-LAUNCH_PARAM_MESSAGE_ID = 320 * ID_OFFSET;
-CONTROL_LEVER_MESSAGE_RMT_ID = 328 * ID_OFFSET; 
-CONTROL_LEVER_MESSAGE_LCL_ID = 329 * ID_OFFSET;
-CP_INPUTS_RMT_ID = 330 * ID_OFFSET; 
-CP_INPUT_LCL_ID = 331 * ID_OFFSET;
-CP_OUTPUT_ID = 336 * ID_OFFSET;
-
-DRUM_MESSAGE_ID = 432 * ID_OFFSET;
-TENSION_MESSAGE_ID = 448 * ID_OFFSET;       
-CABLE_ANGLE_MESSAGE_ID = 464 * ID_OFFSET; 
+TIME_MESSAGE_ID = 256 * ID_SCALE;              % 0x200
+MOTOR_MESSAGE_ID = 292 * ID_SCALE;             % 0x248
+TORQUE_COMMAND_MESSAGE_ID = 300 * ID_SCALE;    % 0x258
+STATE_MESSAGE_ID = 304 * ID_SCALE;             % 0x260
+PARAM_REQUEST_MESSAGE_ID = 312 * ID_SCALE;     % 0x270
+LAUNCH_PARAM_MESSAGE_ID = 320 * ID_SCALE;      % 0x280
+CP_CL_RMT_MESSAGE_ID = 328 * ID_SCALE;         % 0x290
+CP_CL_LCL_MESSAGE_ID = 329 * ID_SCALE;         % 0x292
+CP_INPUTS_RMT_MESSAGE_ID = 330 * ID_SCALE;     % 0x294
+CP_INPUTS_LCL_MESSAGE_ID = 331 * ID_SCALE;     % 0x296
+CP_OUTPUTS_MESSAGE_ID = 336 * ID_SCALE;        % 0x2A0
+ORIENTATION_ID = 385 * ID_SCALE;               % 0x302
+DRUM_MESSAGE_ID = 432 * ID_SCALE;              % 0x360
+TENSION_MESSAGE_ID = 448 * ID_SCALE;           % 0x380
+CABLE_ANGLE_MESSAGE_ID = 464 * ID_SCALE;       % 0x3a0
+ZERO_ODOMETER_ID = 672 * ID_OFFSET;            % 0x540
+ZERO_TENSIOMETER_ID = 681 * ID_OFFSET;         % 0x552
+DENSITY_ALTITUDE_ID = 689 * ID_SCALE;          % 0x562
+WIND_ID = 690 * ID_SCALE;                      % 0x564
+BATTERY_SYSTEM_ID = 704 * ID_SCALE;            % 0x580
 
 CABLE_ANGLE_MESSAGE_RATE = 8;
 CABLE_ANGLE_MESSAGE_MOD = 2;
@@ -101,6 +107,7 @@ torqueToTension = 20;
 
 tensionMessage = glasscontrolpanel.CanCnvt();
 tensionMessage.id = TENSION_MESSAGE_ID;
+tensionStatus = -1;
 
 
 motorToDrum = 7;
@@ -121,6 +128,7 @@ paramMessage.id = LAUNCH_PARAM_MESSAGE_ID;
 
 drumMessage = glasscontrolpanel.CanCnvt();
 drumMessage.id = DRUM_MESSAGE_ID;
+drumStatus = -1;
 
 canIn = glasscontrolpanel.CanCnvt();
 msg = '';   %   Is this needed?
@@ -171,7 +179,7 @@ while(true)
     
 %     tensionMessage.set_short(tensionOffset, 0); %   tension
     tensionMessage.set_halffloat(0.0, 0); %   tension
-    tensionMessage.set_byte (0, 2);  %   status
+    tensionMessage.set_byte (tensionStatus, 2);  %   status
 %     tensionMessage.set_byte (fracTime, 3);  %   fracTime degug
     tensionMessage.dlc = 3;             
     
@@ -180,8 +188,7 @@ while(true)
     motorMessage.set_short(0,2);    %   revolutions not implemented
     motorMessage.set_byte(40, 4);   %   temp, fixed at 40
     motorMessage.set_byte(0, 5);    %   status byte
-    motorMessage.dlc = 6;
-    
+    motorMessage.dlc = 6;    
     
     
     cableAngleMessage.set_halffloat(cableAngle, 0); % cable angle
@@ -191,7 +198,7 @@ while(true)
     drumMessage.set_halffloat(Xi, 0);           % cable deployed
     drumMessage.set_halffloat(0.0, 2);          % cable speed
     drumMessage.set_halffloat(drumRadius, 4);   % radius
-    drumMessage.set_byte(0, 6);                 % status
+    drumMessage.set_byte(drumStatus, 6);        % status
     drumMessage.dlc = 7;              
     
     %    Preallocate data variable for maximum number of rows
@@ -235,7 +242,7 @@ while(true)
                outstream.flush();
                 %   display('Sensor messages sent'); [1000*toc], tic;                
                 
-            case TORQUE_MESSAGE_ID
+            case TORQUE_COMMAND_MESSAGE_ID
 %                 receivedTorque = canIn.get_short(0)* torqueScale;
                 receivedTorque = canIn.get_halffloat(0);
                 %   display('Torque message'); [1000*toc j receivedTorque], tic;
@@ -245,18 +252,32 @@ while(true)
                 % send parameter response message (simulating host controller)
                 % if connected to real host remove the following two lines
                 display(['Parameter Request Message Received']);
-                pause(0.25)
-                paramMessage.msg_prep();
-                outstream.write(paramMessage.msg_prep())
-                outstream.flush();
-                %   reset timers to plot from time 0
+                pause(0.1)
+                if 1    %   Enable to respond to parameter request
+                    paramMessage.msg_prep();
+                    outstream.write(paramMessage.msg_prep())
+                    outstream.flush();
+                    
+                    %   reset timers to plot from time 0
+                    i = 1;
+                    t1 = 0;
+                    launchInProgressFlag = 1;
+                end
+                
+            case LAUNCH_PARAM_MESSAGE_ID
                 i = 1;
                 t1 = 0;
-                launchInProgressFlag = 1;                
-                                
+                launchInProgressFlag = 1;
+            
+            case ZERO_TENSIOMETER_ID
+                tensionStatus = 0;
+                
+            case ZERO_ODOMETER_ID
+                odometerStatus = 0;
+                
             case STATE_MESSAGE_ID
                 receivedState = canIn.get_byte(0)
-%                 display([receivedState]);
+                %                 display([receivedState]);
                 if (receivedState == 1)
                     %   dump unused data rows
                     data = data(1:i, :);
@@ -287,14 +308,13 @@ while(true)
                     text(lmts(2)/10, lmts(4)/7, ['Launch Number: ' ...
                         sprintf('%2d',launchNumber)]);
                     
-                    pause(0.01)
+                    drawnow
                     
                     state = 0;  %    break to outer loop and reset for next launch
                     launchInProgressFlag = 0;
                 end
                 
-            case CONTROL_LEVER_MESSAGE_LCL_ID
-                
+            case CP_CL_RMT_MESSAGE_ID                
                 
             otherwise 
                 %   later this will mean unused ID and just ignored
@@ -332,7 +352,7 @@ while(true)
                 if (floor(t1 * 4) - floor((t1 - tinc) * 4) == 1)
                 %   plot running results
                 pltrslts(data, i, Mg, Tdsp);
-                pause(0.001)
+                drawnow
                 %             display('Ploting complete'); [1000*toc], tic;
             end
             
@@ -369,10 +389,11 @@ while(true)
             tensionMessage.set_byte(0, 2); %    Status
             
             %   Drum            
-            drumMessage.set_halffloat(r , 0);           % cable deployed
-            drumMessage.set_halffloat(rdot, 2);         % cable speed
-            drumMessage.set_halffloat(drumRadius, 4);   % radius
-            drumMessage.set_byte(0, 6);                 % status
+            drumMessage.set_halffloat(r , 0);                   % cable deployed
+            drumMessage.set_halffloat(rdot ...
+                / (2 * pi * drumRadius), 2);  % drum speed
+            drumMessage.set_halffloat(drumRadius, 4);           % radius
+            drumMessage.set_byte(0, 6);                         % status
             drumMessage.dlc = 7;    
             
             torqueMsgFlag = 0;
