@@ -11,6 +11,9 @@ ydotdot = vec(1);
 xdotdot = vec(2);
 ydot = vec(7);
 xdot = vec(5);
+vsq = xdot^2 + ydot^2;
+v = sqrt(vsq);
+vdot = (xdot * xdotdot + ydot * ydotdot) / v;
 y = vec(6);
 
 switch state
@@ -23,9 +26,6 @@ switch state
         end
             
     case 3  %   Liftoff has occured
-        vsq = xdot^2 + ydot^2;
-        v = sqrt(vsq);
-        vdot = (xdot * xdotdot + ydot * ydotdot) / v;
         if vdot < 0
             state = 5;
         end
@@ -34,7 +34,7 @@ switch state
         end       
         
     case 5  %   Airpseed has peaked, damping engaged
-        if ydot <= 0
+        if ydot + 1.5 * vdot <= 0 %   clugey criteria for transition to recovery
             state = 7;            
         end
         if y < 0

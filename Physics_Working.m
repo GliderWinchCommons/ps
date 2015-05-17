@@ -74,6 +74,7 @@ CP_CL_LCL_MESSAGE_ID = 329 * ID_SCALE;         % 0x292
 CP_INPUTS_RMT_MESSAGE_ID = 330 * ID_SCALE;     % 0x294
 CP_INPUTS_LCL_MESSAGE_ID = 331 * ID_SCALE;     % 0x296
 CP_OUTPUTS_MESSAGE_ID = 336 * ID_SCALE;        % 0x2A0
+CP_LCD_MESSAGE_ID = 337 * ID_SCALE;            % 0x2A2
 ORIENTATION_ID = 385 * ID_SCALE;               % 0x302
 DRUM_MESSAGE_ID = 432 * ID_SCALE;              % 0x360
 TENSION_MESSAGE_ID = 448 * ID_SCALE;           % 0x380
@@ -130,6 +131,9 @@ drumMessage = glasscontrolpanel.CanCnvt();
 drumMessage.id = DRUM_MESSAGE_ID;
 drumStatus = -1;
 
+lcdMessage = glasscontrolpanel.CanCnvt();
+lcdMessage.id = CP_LCD_MESSAGE_ID;
+
 canIn = glasscontrolpanel.CanCnvt();
 msg = '';   %   Is this needed?
 
@@ -155,6 +159,11 @@ outstream = OutputStreamWriter(socket.getOutputStream());
 launchInProgressFlag = 0;
 launchNumber = 0;
 
+%   Clear LCD
+lcdMessage.dlc = 0;
+outstream.write(lcdMessage.msg_prep());
+
+
 %   Multiple sequential simulation loop
 
 while(true)
@@ -175,7 +184,7 @@ while(true)
     xdotdot = 0;
     xyint = [Xi xdotinit yinit ydotinit];
         
-    %   initialize data for all CANbus sensor messages
+%   initialize data for all CANbus sensor messages
     
 %     tensionMessage.set_short(tensionOffset, 0); %   tension
     tensionMessage.set_halffloat(0.0, 0); %   tension
@@ -223,6 +232,10 @@ while(true)
                     fracTime = canIn.get_ubyte(0);
                 else
                     fracTime = 0;
+                    %lcdMessage.set_bytes(num2str(canIn.get_int(0),'7d'), 0);  %   get Unix Time
+                    lcdMessage.set_byte(0, 7);  %   set position 
+                    lcdMessage.dlc = 8;
+                    outstream.write(lcdMessage.msg_prep());
                 end
                 %display('Time message');  
                 %   send send sensor messages from last simulation step
