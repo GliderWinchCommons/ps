@@ -323,7 +323,12 @@ while(true)
                     
                     drawnow
                     
-                    state = 0;  %    break to outer loop and reset for next launch
+                    %   reset tension, cable angle, and motor messages 
+                    %   and break to outer loop               
+                    tensionMessage.set_halffloat(0.0, 0);    %   tension
+                    cableAngleMessage.set_halffloat(0.0, 0); % cable angle
+                    drumMessage.set_halffloat(Xi , 0);       % cable deployed
+                    state = 0;
                     launchInProgressFlag = 0;
                 end
                 
